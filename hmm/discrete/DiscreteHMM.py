@@ -104,3 +104,47 @@ class DiscreteHMM(_BaseHMM):
                 B_new[j][k] = numer/denom
         
         return B_new
+
+    def score(self, observations):
+        '''
+        Compute the log probability under the model.
+
+        Parameters
+        ----------
+        observations: array_like, shape(n, n_features=1)
+          Sequence of n_feature-dimensional data points.
+          Each row corresponds to a single data point.
+          Current support n_features = 1
+
+        Returns
+        -------
+        logprob: float
+          Log likehood of the `observations`.
+        '''
+        observations = numpy.asarray(observations)
+
+        # init stage - alpha_1(j) = pi(j)b_j_k1
+        alpha_t = self.pi * self.B[:, observations[0]]
+
+        # recursion
+        for index in range(1, len(observations)):
+            alpha_tn = numpy.dot(alpha_t, self.A) * self.B[:, observations[index]]
+            alpha_t = alpha_tn
+
+        # TODO: current not use log
+        logprob = alpha_t.sum()
+        return logprob
+
+
+if __name__ == '__main__':
+    n = 3
+    m = 2
+    A = numpy.array([[0.4, 0.6, 0], [0, 0.8, 0.2], [0, 0, 1]])
+    B = numpy.array([[0.7, 0.3], [0.4, 0.6], [0.8, 0.2]])
+    pi = numpy.array([1, 0, 0])
+
+    hmm = DiscreteHMM(n, m, A, B, pi, init_type='user', verbose=True)
+    print(hmm)
+
+    result = hmm.score([0, 1, 0, 1])
+    print(result)
